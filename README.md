@@ -9,6 +9,7 @@
 ## Table of Contents
 
 - [What is it?](#what-is-it)
+- [UI](#ui)
 - [How it works](#how-it-works)
 - [Key features](#key-features)
 - [The 3-tier match engine](#the-3-tier-match-engine)
@@ -37,6 +38,14 @@ Finding and applying to relevant software roles across dozens of boards is slow 
 5. **It notifies** your live dashboard in real time over Server-Sent Events as discoveries, matches, and submissions happen.
 
 It ships with a **mock / offline mode**: if no Gemini API key or Firebase credentials are set, everything (Gemini parsing/scoring, browser automation, file storage) degrades gracefully into deterministic simulations backed by a local JSON database — perfect for local development.
+
+---
+
+## UI
+
+![Autonomous AI Job Application Agent dashboard](docs/screenshots/dashboard.png)
+
+*The live dashboard: real-time match metrics, top AI-scored roles, and the pipeline control panel — with an audited trail of every discovered job and submitted application.*
 
 ---
 
