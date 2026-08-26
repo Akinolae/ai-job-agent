@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Senior Frontend Engineer (React/TypeScript)",
+    "company": "Miro",
+    "location": "Amsterdam, Netherlands",
+    "workplaceType": "Hybrid",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/7342854"
+  },
+  {
+    "title": "Full Stack Engineer (Golang/React)",
+    "company": "Klarna",
+    "location": "Berlin, Germany",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8122720"
+  },
+  {
+    "title": "Senior Software Engineer (Web Experience)",
+    "company": "Spotify",
+    "location": "Stockholm, Sweden",
+    "workplaceType": "Hybrid",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8099261"
+  },
+  {
+    "title": "Full Stack Developer",
+    "company": "Personio",
+    "location": "Munich, Germany",
+    "workplaceType": "Hybrid",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/7342854"
+  },
+  {
+    "title": "Senior Frontend Developer",
+    "company": "Trade Republic",
+    "location": "Berlin, Germany",
+    "workplaceType": "Hybrid",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8122720"
+  }
+]

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous AI Job Application Agent Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-surface: #131a26;
+      --bg-card: #1c2635;
+      --border-color: #2b394a;
+      
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+
+      --accent-color: #10b981; /* Emerald Green for primary actions & positive scores */
+      --accent-hover: #059669;
+      --warning-color: #f59e0b; /* Amber for queue/in-progress */
+      --danger-color: #ef4444;  /* Red for skips/rejects */
+      --info-color: #3b82f6;    /* Blue for generic info */
+
+      --font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .brand .logo-icon {
+      width: 2rem;
+      height: 2rem;
+      background: var(--accent-color);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--text-primary);
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .metric-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card .label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-card .value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
+
+    .metric-card.matched::before { background-color: var(--accent-color); }
+    .metric-card.applied::before { background-color: var(--info-color); }
+    .metric-card.queued::before { background-color: var(--warning-color); }
+    .metric-card.skipped::before { background-color: var(--danger-color); }
+
+    /* Actions Panel */
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .action-bar h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background-color: var(--accent-color);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Jobs Section */
+    .section-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 968px) {
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-panel {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .card-panel h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .job-item {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .job-item:hover {
+      border-color: #4b5d73;
+      transform: translateY(-1px);
+    }
+
+    .job-item.selected {
+      border-color: var(--accent-color);
+      background-color: rgba(16, 185, 129, 0.03);
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .job-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .job-meta {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-score {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--accent-color);
+    }
+
+    .badge-score.low {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--danger-color);
+    }
+
+    .badge-status {
+      font-size: 0.6875rem;
+    }
+
+    .status-applied { background-color: rgba(59, 130, 246, 0.15); color: var(--info-color); }
+    .status-queued { background-color: rgba(245, 158, 11, 0.15); color: var(--warning-color); }
+    .status-skipped { background-color: rgba(107, 114, 128, 0.15); color: var(--text-secondary); }
+    .status-new { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-color); }
+    .status-manual_apply { background-color: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .status-failed { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
+
+    /* Detail Panel */
+    .detail-view {
+      position: sticky;
+      top: 5.5rem;
+    }
+
+    .detail-view .placeholder-text {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 4rem 1rem;
+    }
+
+    .detail-header {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+
+    .detail-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-company {
+      font-weight: 600;
+      color: var(--accent-color);
+      font-size: 0.9375rem;
+    }
+
+    .score-breakdown-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .score-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .score-label { color: var(--text-secondary); }
+    .score-val { font-weight: 600; color: #fff; }
+
+    .detail-block {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-block h4 {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Profile tab styling */
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .profile-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      width: 100%;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.625rem 0.875rem;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    /* Modal dialog */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Audit views */
+    .screenshot-box {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .screenshot-box img {
+      width: 100%;
+      display: block;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo-icon">A</div>
+      <h1>AI Job Application Agent</h1>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard')">Overview</button>
+      <button class="tab-btn" onclick="switchTab('jobs')">Discovered Jobs</button>
+      <button class="tab-btn" onclick="switchTab('profile')">Candidate Profile</button>
+      <button class="tab-btn" onclick="switchTab('applications')">Applications Log</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tab 1: Dashboard Overview -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="metrics-grid">
+        <div class="metric-card matched">
+          <div class="label">High Match Rate (≥80)</div>
+          <div id="metric-match-rate" class="value">0</div>
+        </div>
+        <div class="metric-card applied">
+          <div class="label">Applications Submitted</div>
+          <div id="metric-applied" class="value">0</div>
+        </div>
+        <div class="metric-card queued">
+          <div class="label">In Queue</div>
+          <div id="metric-queued" class="value">0</div>
+        </div>
+        <div class="metric-card skipped">
+          <div class="label">Total Crawler Discoveries</div>
+          <div id="metric-total-discoveries" class="value">0</div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div>
+          <h2>Autonomous Recruitment Loop</h2>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Run crawler scraping loops across Indeed, LinkedIn, and direct ATS boards.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-secondary" onclick="runPipeline(true)">Dry Run Scan</button>
+          <button class="btn" onclick="runPipeline(false)">Trigger Live Submissions</button>
+        </div>
+      </div>
+
+      <div class="section-grid">
+        <div class="card-panel">
+          <h3>Top Matches Available</h3>
+          <div id="top-jobs-list" class="job-list">
+            <div class="placeholder-text" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              Loading top matches...
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-panel detail-view">
+          <h3>Match Assessment</h3>
+          <div id="assessment-detail" class="placeholder-text">
+            Select a job from the list to view its scoring rubric breakdown.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Discovered Jobs -->
+    <div id="tab-jobs" class="tab-content">
+      <div class="card-panel">
+        <h3>All Crawled Postings</h3>
+        <div id="all-jobs-list" class="job-list" style="margin-top: 1rem;">
+          <div class="placeholder-text" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            Loading database records...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Candidate Profile -->
+    <div id="tab-profile" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+        <div>
+          <div class="card-panel" style="margin-bottom: 1.5rem;">
+            <h3>CV Resume Ingestion</h3>
+            <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+              Parse a local CV file. AI will structure skills and work history automatically.
+            </p>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="openParseModal()">Upload PDF Resume</button>
+          </div>
+          <div class="card-panel">
+            <h3>Active Profile Metadata</h3>
+            <div style="margin-top: 1rem; font-size: 0.875rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="color: var(--text-secondary);">Last Parsed:</span>
+                <span id="profile-last-parsed" style="font-weight: 500;">Never</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-secondary);">CV File:</span>
+                <span id="profile-cv-path" style="font-weight: 500; font-family: monospace;">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-panel">
+          <h3>Profile Field Editor</h3>
+          <form id="profile-form" onsubmit="saveProfile(event)" style="margin-top: 1.5rem;">
+            <div class="profile-form-grid">
+              <div class="form-group">
+                <label for="prof-name">Name</label>
+                <input type="text" id="prof-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="prof-email">Email</label>
+                <input type="email" id="prof-email" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="prof-phone">Phone</label>
+                <input type="text" id="prof-phone" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="prof-loc">Location</label>
+                <input type="text" id="prof-loc" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="prof-exp">Experience (Years)</label>
+                <input type="number" id="prof-exp" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="prof-auth">Work Authorization / Visa</label>
+                <input type="text" id="prof-auth" class="form-control" required>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 0.5rem;">
+              <label for="prof-roles">Target Roles (Comma-separated)</label>
+              <input type="text" id="prof-roles" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="prof-locations">Target Locations (Comma-separated)</label>
+              <input type="text" id="prof-locations" class="form-control">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+              <button type="submit" class="btn">Save Profile Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Applications Log -->
+    <div id="tab-applications" class="tab-content">
+      <div class="section-grid">
+        <div class="card-panel">
+          <h3>Submission Audit Trail</h3>
+          <div id="applications-list" class="job-list" style="margin-top: 1rem;">
+            <div class="placeholder-text" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              Loading audit logs...
+            </div>
+          </div>
+        </div>
+
+        <div class="card-panel detail-view">
+          <h3>Submission Receipt</h3>
+          <div id="app-receipt-detail" class="placeholder-text">
+            Select an application to view the pre-filled forms and screenshots.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Parse Resume Modal -->
+  <div id="parse-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Parse PDF Resume</div>
+      <div class="form-group">
+        <label for="resume-local-path">Absolute path to local resume PDF</label>
+        <input type="text" id="resume-local-path" class="form-control" placeholder="/Users/username/resume.pdf">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeParseModal()">Cancel</button>
+        <button class="btn" onclick="parseResume()">Parse CV with AI</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

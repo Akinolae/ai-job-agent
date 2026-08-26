@@ -1,0 +1,17 @@
+[
+  { "board": "greenhouse", "companyId": "adyen",       "displayName": "Adyen" },
+  { "board": "greenhouse", "companyId": "stripe",      "displayName": "Stripe" },
+  { "board": "greenhouse", "companyId": "monzo",       "displayName": "Monzo" },
+  { "board": "greenhouse", "companyId": "wise",        "displayName": "Wise" },
+  { "board": "greenhouse", "companyId": "n26",         "displayName": "N26" },
+  { "board": "greenhouse", "companyId": "sumup",       "displayName": "SumUp" },
+  { "board": "greenhouse", "companyId": "gocardless",  "displayName": "GoCardless" },
+  { "board": "greenhouse", "companyId": "marqeta",     "displayName": "Marqeta" },
+  { "board": "greenhouse", "companyId": "brex",        "displayName": "Brex" },
+  { "board": "greenhouse", "companyId": "mercury",     "displayName": "Mercury" },
+  { "board": "greenhouse", "companyId": "wolt",        "displayName": "Wolt" },
+  { "board": "greenhouse", "companyId": "contentful",  "displayName": "Contentful" },
+  { "board": "greenhouse", "companyId": "commercetools","displayName": "Commercetools" },
+  { "board": "greenhouse", "companyId": "traderepublic","displayName": "Trade Republic" },
+  { "board": "lever",      "companyId": "spotify",     "displayName": "Spotify" }
+]
