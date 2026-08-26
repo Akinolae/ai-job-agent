@@ -43,9 +43,17 @@ It ships with a **mock / offline mode**: if no Gemini API key or Firebase creden
 
 ## UI
 
+### Landing page
+
+![AI Job Agent landing page](docs/screenshots/landing.png)
+
+*The public landing page visitors see before signing in — hero section, value pillars, feature highlights, a live pipeline demo, and the how-it-works walkthrough.*
+
+### Dashboard
+
 ![Autonomous AI Job Application Agent dashboard](docs/screenshots/dashboard.png)
 
-*The live dashboard: real-time match metrics, top AI-scored roles, and the pipeline control panel — with an audited trail of every discovered job and submitted application.*
+*The authenticated agent dashboard: real-time match metrics, top AI-scored roles, and the pipeline control panel — with an audited trail of every discovered job and submitted application.*
 
 ---
 
