@@ -15,6 +15,7 @@ export class PipelineOrchestrator {
   private static isCronActive: boolean = false;
   private static cronIntervalMinutes: number = 60;
   private static cronTimer: NodeJS.Timeout | null = null;
+  private static crashGuardsInstalled: boolean = false;
 
   static getStatus(): {
     isRunning: boolean;
@@ -48,23 +49,23 @@ export class PipelineOrchestrator {
       `[Pipeline] Autonomous cron scheduler activated: running every ${intervalMinutes} minute(s).`,
     );
 
-    // Trigger immediate run
-    this.runFullPipeline(dryRun).catch((e) =>
+    // Robustness: keep the recurring loop alive even if a single run throws.
+    this.installCrashGuards();
+
+    // Trigger immediate run (isolated so a failure never halts the timer)
+    this.runCronTick(dryRun, "immediate").catch((e) =>
       console.error("[Pipeline Cron Error]", e),
     );
 
     // Schedule recurring runs
-    this.cronTimer = setInterval(
-      () => {
-        console.log(
-          `[Pipeline] Triggering scheduled cron run (every ${intervalMinutes}m)...`,
-        );
-        this.runFullPipeline(dryRun).catch((e) =>
-          console.error("[Pipeline Cron Error]", e),
-        );
-      },
-      intervalMinutes * 60 * 1000,
-    );
+    this.cronTimer = setInterval(() => {
+      console.log(
+        `[Pipeline] Triggering scheduled cron run (every ${intervalMinutes}m)...`,
+      );
+      this.runCronTick(dryRun, "interval").catch((e) =>
+        console.error("[Pipeline Cron Error]", e),
+      );
+    }, intervalMinutes * 60 * 1000);
 
     NotificationService.send({
       type: "SCAN_COMPLETE",
@@ -84,7 +85,6 @@ export class PipelineOrchestrator {
     if (this.cronTimer) {
       clearInterval(this.cronTimer);
       this.cronTimer = null;
-      o;
     }
     this.stopPipeline();
 
@@ -127,6 +127,50 @@ export class PipelineOrchestrator {
       success: true,
       message: "Pipeline scan and cron job stopped successfully.",
     };
+  }
+
+  /**
+   * Crash-safe wrapper around runFullPipeline. Guarantees that an error in a
+   * single tick is logged and swallowed — it can never clear the recurring
+   * timer or halt the scheduler loop.
+   */
+  private static async runCronTick(
+    dryRun: boolean,
+    source: string,
+  ): Promise<void> {
+    try {
+      await this.runFullPipeline(dryRun);
+    } catch (err) {
+      console.error(`[Pipeline Cron Error] during ${source} run:`, err);
+      // Never propagate: the recurring timer must keep firing on the next tick.
+    }
+  }
+
+  /**
+   * Installs process-level crash guards so an unexpected error inside the
+   * background scheduler can never silently kill the process (which would
+   * stop the cron loop permanently). Handlers are installed only once.
+   */
+  private static installCrashGuards(): void {
+    if (this.crashGuardsInstalled) return;
+    this.crashGuardsInstalled = true;
+
+    process.on("unhandledRejection", (reason) => {
+      console.error(
+        "[Pipeline] Unhandled promise rejection caught (cron kept alive):",
+        reason,
+      );
+    });
+
+    process.on("uncaughtException", (err) => {
+      // Do not exit: an autonomous scheduler must survive a stray top-level error.
+      console.error(
+        "[Pipeline] Uncaught exception handled (cron kept alive):",
+        err,
+      );
+    });
+
+    console.log("[Pipeline] Process crash guards installed for cron loop.");
   }
 
   /**
@@ -300,7 +344,16 @@ export class PipelineOrchestrator {
         const evaluatedBatch = await Promise.all(
           batch.map(async (job) => {
             await dbService.saveJob(job);
-            return Scorer.evaluateJob(job);
+            try {
+              return await Scorer.evaluateJob(job);
+            } catch (jobErr) {
+              // One failing posting must not abort the whole run.
+              console.error(
+                `[Scorer] Evaluation failed for ${job.jobId} "${job.title}" — skipping job, continuing batch:`,
+                jobErr,
+              );
+              return job;
+            }
           })
         );
 
