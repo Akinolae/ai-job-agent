@@ -48,6 +48,7 @@ export default function Dashboard() {
   
   // Selected detail IDs
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -988,7 +989,7 @@ export default function Dashboard() {
                         href={selectedJob.applyUrl} 
                         target="_blank" 
                         rel="noreferrer" 
-                        style={{ color: 'var(--accent-color)', fontSize: '0.875rem', decoration: 'none', wordBreak: 'break-all' }}
+                        style={{ color: 'var(--accent-color)', fontSize: '0.875rem', textDecoration: 'none', wordBreak: 'break-all' }}
                       >
                         {selectedJob.applyUrl}
                       </a>

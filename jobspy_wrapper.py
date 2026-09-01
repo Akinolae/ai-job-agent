@@ -8,57 +8,69 @@ SITE_TIMEOUT_SECONDS = 90  # Max seconds to wait per site per search
 
 import re
 
-# Comprehensive dictionary mapping target country codes to aliases, major cities, and regions
+# Comprehensive dictionary mapping target country codes to aliases, major cities, and regions across 4 continents
 COUNTRY_LOCATION_MAP = {
     # Americas
-    "usa": ("usa", "united states", "us", "u.s.", "america", "new york", "san francisco", "austin", "seattle", "california", "texas"),
-    "canada": ("canada", "toronto", "vancouver", "montreal", "ottawa", "ontario"),
-    "mexico": ("mexico", "mexico city", "guadalajara", "monterrey"),
-    "brazil": ("brazil", "brasil", "sao paulo", "rio de janeiro"),
-    "argentina": ("argentina", "buenos aires"),
-    "colombia": ("colombia", "bogota", "medellin"),
-    "chile": ("chile", "santiago"),
+    "usa": ("usa", "united states", "us", "u.s.", "america", "new york", "san francisco", "austin", "seattle", "california", "texas", "remote us", "remote usa"),
+    "canada": ("canada", "toronto", "vancouver", "montreal", "ottawa", "ontario", "quebec", "british columbia", "remote canada"),
+    "mexico": ("mexico", "mexico city", "guadalajara", "monterrey", "remote mexico"),
+    "brazil": ("brazil", "brasil", "sao paulo", "rio de janeiro", "belo horizonte", "curitiba", "remote brazil"),
+    "argentina": ("argentina", "buenos aires", "cordoba", "rosario"),
+    "colombia": ("colombia", "bogota", "medellin", "cali"),
+    "chile": ("chile", "santiago", "valparaiso"),
+    "costa rica": ("costa rica", "san jose"),
+    "uruguay": ("uruguay", "montevideo"),
     # Europe
-    "uk": ("uk", "united kingdom", "great britain", "england", "scotland", "wales", "london", "manchester", "birmingham", "edinburgh", "bristol", "leeds"),
-    "germany": ("germany", "deutschland", "berlin", "munich", "frankfurt", "hamburg", "cologne", "stuttgart", "dusseldorf"),
-    "netherlands": ("netherlands", "holland", "amsterdam", "rotterdam", "utrecht", "the hague", "eindhoven"),
+    "uk": ("uk", "united kingdom", "great britain", "england", "scotland", "wales", "london", "manchester", "birmingham", "edinburgh", "bristol", "leeds", "remote uk"),
+    "germany": ("germany", "deutschland", "berlin", "munich", "frankfurt", "hamburg", "cologne", "stuttgart", "dusseldorf", "remote germany", "remote eu"),
+    "netherlands": ("netherlands", "holland", "amsterdam", "rotterdam", "utrecht", "the hague", "eindhoven", "remote netherlands"),
     "france": ("france", "paris", "lyon", "marseille", "toulouse", "bordeaux", "nantes"),
-    "spain": ("spain", "espana", "madrid", "barcelona", "valencia", "seville"),
-    "italy": ("italy", "italia", "rome", "milan", "turin", "florence"),
-    "ireland": ("ireland", "dublin", "cork", "galway"),
+    "spain": ("spain", "espana", "madrid", "barcelona", "valencia", "seville", "malaga"),
+    "italy": ("italy", "italia", "rome", "milan", "turin", "florence", "bologna"),
+    "ireland": ("ireland", "dublin", "cork", "galway", "limerick"),
     "switzerland": ("switzerland", "zurich", "geneva", "basel", "lausanne", "bern"),
     "sweden": ("sweden", "stockholm", "gothenburg", "malmo"),
-    "poland": ("poland", "warsaw", "krakow", "wroclaw", "gdansk"),
-    "belgium": ("belgium", "brussels", "antwerp", "ghent"),
-    "austria": ("austria", "vienna", "salzburg"),
-    "portugal": ("portugal", "lisbon", "porto"),
-    "norway": ("norway", "oslo", "bergen"),
-    "denmark": ("denmark", "copenhagen", "aarhus"),
-    "finland": ("finland", "helsinki", "espoo"),
+    "poland": ("poland", "warsaw", "krakow", "wroclaw", "gdansk", "poznan"),
+    "belgium": ("belgium", "brussels", "antwerp", "ghent", "bruges"),
+    "austria": ("austria", "vienna", "salzburg", "graz"),
+    "portugal": ("portugal", "lisbon", "porto", "braga"),
+    "norway": ("norway", "oslo", "bergen", "trondheim"),
+    "denmark": ("denmark", "copenhagen", "aarhus", "odense"),
+    "finland": ("finland", "helsinki", "espoo", "tampere"),
     "czech republic": ("czech republic", "czechia", "prague", "brno"),
-    "romania": ("romania", "bucharest", "cluj"),
+    "romania": ("romania", "bucharest", "cluj", "timisoara", "iasi"),
+    "estonia": ("estonia", "tallinn", "tartu"),
+    "greece": ("greece", "athens", "thessaloniki"),
+    "hungary": ("hungary", "budapest"),
     # Africa
-    "nigeria": ("nigeria", "lagos", "abuja", "port harcourt", "ibadan"),
-    "south africa": ("south africa", "cape town", "johannesburg", "durban", "pretoria"),
+    "nigeria": ("nigeria", "lagos", "abuja", "port harcourt", "ibadan", "enugu", "kano", "remote nigeria", "remote africa"),
+    "south africa": ("south africa", "cape town", "johannesburg", "durban", "pretoria", "remote south africa"),
+    "kenya": ("kenya", "nairobi", "mombasa", "kisumu", "remote kenya"),
+    "ghana": ("ghana", "accra", "kumasi", "tema", "remote ghana"),
     "egypt": ("egypt", "cairo", "alexandria", "giza"),
-    "morocco": ("morocco", "casablanca", "rabat", "marrakech"),
+    "morocco": ("morocco", "casablanca", "rabat", "marrakech", "tangier"),
+    "rwanda": ("rwanda", "kigali"),
+    "uganda": ("uganda", "kampala"),
+    "senegal": ("senegal", "dakar"),
+    "mauritius": ("mauritius", "port louis"),
     # Middle East & Asia-Pacific
-    "uae": ("uae", "united arab emirates", "dubai", "abu dhabi"),
-    "saudi arabia": ("saudi arabia", "riyadh", "jeddah"),
-    "israel": ("israel", "tel aviv", "jerusalem"),
-    "india": ("india", "bangalore", "bengaluru", "mumbai", "delhi", "hyderabad", "pune", "chennai", "gurgaon", "noida"),
-    "singapore": ("singapore",),
-    "australia": ("australia", "sydney", "melbourne", "brisbane", "perth", "adelaide"),
+    "singapore": ("singapore", "remote singapore", "remote apac"),
+    "uae": ("uae", "united arab emirates", "dubai", "abu dhabi", "sharjah", "remote uae", "remote emea"),
+    "saudi arabia": ("saudi arabia", "riyadh", "jeddah", "dammam"),
+    "israel": ("israel", "tel aviv", "jerusalem", "haifa"),
+    "qatar": ("qatar", "doha"),
+    "india": ("india", "bangalore", "bengaluru", "mumbai", "delhi", "hyderabad", "pune", "chennai", "gurgaon", "noida", "remote india"),
+    "australia": ("australia", "sydney", "melbourne", "brisbane", "perth", "adelaide", "remote australia"),
     "new zealand": ("new zealand", "auckland", "wellington", "christchurch"),
-    "japan": ("japan", "tokyo", "osaka", "kyoto"),
-    "south korea": ("south korea", "korea", "seoul", "busan"),
+    "japan": ("japan", "tokyo", "osaka", "kyoto", "fukuoka", "yokohama"),
+    "south korea": ("south korea", "korea", "seoul", "busan", "incheon"),
     "hong kong": ("hong kong", "hk"),
-    "taiwan": ("taiwan", "taipei"),
-    "malaysia": ("malaysia", "kuala lumpur", "penang"),
-    "philippines": ("philippines", "manila", "cebu"),
-    "vietnam": ("vietnam", "ho chi minh", "hanoi"),
-    "thailand": ("thailand", "bangkok"),
-    "indonesia": ("indonesia", "jakarta", "bali"),
+    "taiwan": ("taiwan", "taipei", "hsinchu"),
+    "malaysia": ("malaysia", "kuala lumpur", "penang", "cyberjaya"),
+    "philippines": ("philippines", "manila", "cebu", "quezon city"),
+    "vietnam": ("vietnam", "ho chi minh", "hanoi", "da nang"),
+    "thailand": ("thailand", "bangkok", "chiang mai"),
+    "indonesia": ("indonesia", "jakarta", "bali", "bandung"),
 }
 
 # Inverted keyword mapping table: token -> canonical country code
@@ -76,7 +88,7 @@ _SHORT_KEYWORD_PATTERNS = {
 def map_country_for_indeed(location_str: str, default_country: str = "worldwide") -> str:
     """
     Intelligently and efficiently maps arbitrary location strings, city names,
-    country aliases, and regions to standard Indeed country codes.
+    country aliases, and regions to standard Indeed country codes across Europe, Americas, Asia, and Africa.
     """
     if not location_str:
         return default_country
@@ -95,11 +107,26 @@ def map_country_for_indeed(location_str: str, default_country: str = "worldwide"
         elif kw in loc:
             return country
 
+    # 3. Check regional groupings for defaults
+    if any(k in loc for k in ("europe", "eu", "emea", "germany", "netherlands", "uk")):
+        return "uk"
+    if any(k in loc for k in ("africa", "nigeria", "ghana", "kenya", "south africa")):
+        return "south africa"
+    if any(k in loc for k in ("asia", "apac", "singapore", "india", "japan")):
+        return "singapore"
+    if any(k in loc for k in ("latam", "americas", "brazil", "canada")):
+        return "canada"
+
     return default_country
 
 
 def scrape_single_site(site, search_term, location, limit, hours_old, country):
     """Scrape a single job board site and return a list of job dicts."""
+    # Normalize site identifier
+    site_key = site.strip().lower()
+    if site_key == "ziprecruiter":
+        site_key = "zip_recruiter"
+
     try:
         from jobspy.model import Country
         if not getattr(Country, '_patched_safe', False):
@@ -113,15 +140,17 @@ def scrape_single_site(site, search_term, location, limit, hours_old, country):
             Country.from_string = safe_from_string
             Country._patched_safe = True
 
-        is_remote_query = "remote" in (location or "").lower() or "worldwide" in (location or "").lower()
+        is_remote_query = any(k in (location or "").lower() for k in ("remote", "worldwide", "anywhere", "global", "telecommute"))
         from jobspy import scrape_jobs
+        
+        # Scrape with robust parameter handling across all supported boards
         jobs_df = scrape_jobs(
-            site_name=[site],
+            site_name=[site_key],
             search_term=search_term,
             location="" if is_remote_query else location,
             is_remote=is_remote_query,
             results_wanted=limit,
-            hours_old=hours_old,
+            hours_old=hours_old or 336,  # 336 hours = 2 weeks
             country_indeed=country or "worldwide",
             verbose=0,
         )
@@ -129,22 +158,28 @@ def scrape_single_site(site, search_term, location, limit, hours_old, country):
         if jobs_df is not None and not jobs_df.empty:
             jobs_df = jobs_df.fillna("")
             for r in jobs_df.to_dict(orient="records"):
-                job_url = str(r.get("job_url", ""))
+                job_url = str(r.get("job_url", "")).strip()
+                loc_val = str(r.get("location", "")).strip()
+                workplace_val = str(r.get("job_type", "")).strip()
+                if is_remote_query and (not workplace_val or workplace_val.lower() == "full-time"):
+                    workplace_val = "Remote"
+                if is_remote_query and not loc_val:
+                    loc_val = f"Remote ({location or 'Worldwide'})"
                 results.append({
                     "id": str(r.get("id", "")),
-                    "title": str(r.get("title", "")),
-                    "company": str(r.get("company", "")),
-                    "location": str(r.get("location", "")),
-                    "workplace_type": str(r.get("job_type", "Full-time")),
+                    "title": str(r.get("title", "")).strip(),
+                    "company": str(r.get("company", "")).strip(),
+                    "location": loc_val or location or "Worldwide Remote",
+                    "workplace_type": workplace_val or "Full-time",
                     "job_url": job_url,
                     "description": str(r.get("description", "")),
-                    "site": site,
+                    "site": site_key,
                     "date_posted": str(r.get("date_posted", "")),
                 })
-        print(f"  [{site}] {len(results)} results for '{search_term}' in '{location}'", file=sys.stderr)
+        print(f"  [{site_key}] {len(results)} results for '{search_term}' in '{location}' (2-week window)", file=sys.stderr)
         return results
     except Exception as e:
-        print(f"  [{site}] ERROR: {e}", file=sys.stderr)
+        print(f"  [{site_key}] Board query note/error for '{search_term}': {e}", file=sys.stderr)
         return []
 
 
@@ -154,9 +189,10 @@ def main():
     parser.add_argument("--searches", type=str, default="", help="JSON array of extra search terms")
     parser.add_argument("--location", type=str, default="", help="Location search filter")
     parser.add_argument("--locations", type=str, default="", help="JSON array of extra locations")
+    parser.add_argument("--sites", type=str, default="indeed,linkedin,zip_recruiter,glassdoor,google", help="Comma-separated list of boards to search")
     parser.add_argument("--limit", type=int, default=10, help="Results per site per search")
-    parser.add_argument("--hours", type=int, default=336, help="Max hours old (default 336 = 2 weeks)")
-    parser.add_argument("--country", type=str, default="uk", help="Default country for Indeed")
+    parser.add_argument("--hours", type=int, default=336, help="Max hours old (336 hours = 2 weeks)")
+    parser.add_argument("--country", type=str, default="worldwide", help="Default country for Indeed")
     args = parser.parse_args()
 
     # Build full list of search terms and locations
@@ -183,13 +219,15 @@ def main():
 
     locations = list(dict.fromkeys([l.strip() for l in locations]))
 
-    # Target the working high-yield live boards in JobSpy
-    sites = ["linkedin", "indeed"]
+    # Target all major live boards across the ecosystem
+    sites = [s.strip() for s in args.sites.split(",") if s.strip()]
+    if not sites:
+        sites = ["indeed", "linkedin", "zip_recruiter", "glassdoor", "google"]
 
     all_results = []
     seen_urls = set()
 
-    print(f"Scraping {len(sites)} boards across {len(search_terms)} target roles and {len(locations)} locations...", file=sys.stderr)
+    print(f"Scraping {len(sites)} boards ({', '.join(sites)}) across {len(search_terms)} target roles and {len(locations)} locations (Max 2 weeks old / 336h)...", file=sys.stderr)
 
     try:
         from jobspy import scrape_jobs  # noqa – just verify installed

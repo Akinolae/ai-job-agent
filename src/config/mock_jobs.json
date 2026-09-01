@@ -2,41 +2,105 @@
   {
     "title": "Senior Frontend Engineer (React/TypeScript)",
     "company": "Miro",
-    "location": "Amsterdam, Netherlands",
-    "workplaceType": "Hybrid",
+    "location": "Amsterdam, Netherlands (Remote Europe)",
+    "workplaceType": "Remote",
     "boardType": "greenhouse",
     "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/7342854"
   },
   {
     "title": "Full Stack Engineer (Golang/React)",
     "company": "Klarna",
-    "location": "Berlin, Germany",
+    "location": "Berlin, Germany (Remote EU)",
     "workplaceType": "Remote",
-    "boardType": "greenhouse",
-    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8122720"
+    "boardType": "lever",
+    "applyUrl": "https://jobs.lever.co/klarna/full-stack-engineer"
   },
   {
-    "title": "Senior Software Engineer (Web Experience)",
+    "title": "Senior Software Engineer (Web Platforms)",
     "company": "Spotify",
-    "location": "Stockholm, Sweden",
-    "workplaceType": "Hybrid",
+    "location": "Stockholm, Sweden (Remote EMEA)",
+    "workplaceType": "Remote",
     "boardType": "greenhouse",
     "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8099261"
   },
   {
-    "title": "Full Stack Developer",
-    "company": "Personio",
-    "location": "Munich, Germany",
-    "workplaceType": "Hybrid",
+    "title": "Senior Full-Stack Engineer (TypeScript/Node/React)",
+    "company": "GitLab",
+    "location": "Remote Worldwide (Work from Anywhere)",
+    "workplaceType": "Remote",
     "boardType": "greenhouse",
-    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/7342854"
+    "applyUrl": "https://job-boards.greenhouse.io/gitlab/jobs/5912401"
   },
   {
-    "title": "Senior Frontend Developer",
-    "company": "Trade Republic",
-    "location": "Berlin, Germany",
-    "workplaceType": "Hybrid",
+    "title": "Senior Backend / Full-Stack Engineer",
+    "company": "Flutterwave",
+    "location": "Lagos, Nigeria (Remote Africa)",
+    "workplaceType": "Remote",
     "boardType": "greenhouse",
-    "applyUrl": "https://job-boards.greenhouse.io/adyen/jobs/8122720"
+    "applyUrl": "https://job-boards.greenhouse.io/flutterwave/jobs/6102914"
+  },
+  {
+    "title": "Staff Software Engineer (Global Remote)",
+    "company": "Automattic",
+    "location": "Worldwide Remote (Any Country)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/automattic/jobs/4829105"
+  },
+  {
+    "title": "Full-Stack Engineer (React & Go)",
+    "company": "Grab",
+    "location": "Singapore (Remote APAC)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/grab/jobs/7281923"
+  },
+  {
+    "title": "Senior Software Engineer",
+    "company": "Andela",
+    "location": "Nairobi, Kenya (Remote Africa / Global)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/andela/jobs/6920194"
+  },
+  {
+    "title": "Senior Web Developer",
+    "company": "Shopify",
+    "location": "Toronto, Canada (Remote Americas)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/shopify/jobs/7719204"
+  },
+  {
+    "title": "Senior Frontend Engineer (React/TypeScript)",
+    "company": "Paystack",
+    "location": "Lagos, Nigeria (Remote Africa)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/paystack/jobs/829104"
+  },
+  {
+    "title": "Senior Full-Stack Engineer (Core Banking / React & Node)",
+    "company": "Moniepoint",
+    "location": "Lagos, Nigeria (Hybrid / Remote Africa)",
+    "workplaceType": "Remote",
+    "boardType": "greenhouse",
+    "applyUrl": "https://job-boards.greenhouse.io/moniepoint/jobs/749102"
+  },
+  {
+    "title": "Senior Backend Engineer (NodeJS / NestJS)",
+    "company": "Helium Health",
+    "location": "Lagos, Nigeria (Remote Africa)",
+    "workplaceType": "Remote",
+    "boardType": "lever",
+    "applyUrl": "https://jobs.lever.co/heliumhealth/senior-backend-engineer"
+  },
+  {
+    "title": "Senior Software Engineer (Mobile / React Native)",
+    "company": "Kuda Bank",
+    "location": "Cape Town, South Africa (Remote Africa)",
+    "workplaceType": "Remote",
+    "boardType": "lever",
+    "applyUrl": "https://jobs.lever.co/kuda/senior-software-engineer"
   }
 ]

@@ -109,7 +109,14 @@ export const CandidateProfileForm: React.FC<CandidateProfileFormProps> = ({
       workAuthorization: profile?.workAuthorization || 'Eligible / Open to Relocation',
       targetRoles: profile?.targetRoles || ['Senior Full-Stack Engineer'],
       potentiallyQualifiedRoles: profile?.potentiallyQualifiedRoles || [],
-      targetLocations: profile?.targetLocations || ['Remote Worldwide', 'United Kingdom', 'Germany', 'United States'],
+      targetLocations: profile?.targetLocations || [
+        'Remote Worldwide', 
+        'Europe (UK, Germany, Netherlands, Ireland)', 
+        'Americas (USA, Canada, Brazil)', 
+        'Asia (Singapore, UAE, Japan)', 
+        'Africa (Nigeria, South Africa, Kenya)',
+        'Fully Remote / Anywhere'
+      ],
       coreSkills: profile?.coreSkills || profile?.skills?.core || ['Full-Stack Development', 'System Architecture'],
       toolsAndPlatforms: profile?.toolsAndPlatforms || profile?.skills?.tools || ['React', 'TypeScript', 'Node.js', 'PostgreSQL'],
       salaryMin: profile?.salaryExpectationEUR?.min || 75000,
@@ -405,7 +412,7 @@ export const CandidateProfileForm: React.FC<CandidateProfileFormProps> = ({
                 tags={formik.values.targetRoles}
                 onChange={(tags) => formik.setFieldValue('targetRoles', tags)}
                 placeholder="Add target role (e.g. Senior Frontend Engineer, Social Media Lead)..."
-                theme="emerald"
+                theme="green"
                 icon={<FiTarget style={{ fontSize: '0.75rem' }} />}
               />
               {formik.touched.targetRoles && formik.errors.targetRoles && (
@@ -423,7 +430,7 @@ export const CandidateProfileForm: React.FC<CandidateProfileFormProps> = ({
                 tags={formik.values.potentiallyQualifiedRoles}
                 onChange={(tags) => formik.setFieldValue('potentiallyQualifiedRoles', tags)}
                 placeholder="Add adjacent roles (e.g. Growth Specialist, Full-Stack Engineer, Product Marketer)..."
-                theme="blue"
+                theme="cyan"
                 icon={<FiBriefcase style={{ fontSize: '0.75rem' }} />}
               />
             </div>
@@ -497,8 +504,8 @@ export const CandidateProfileForm: React.FC<CandidateProfileFormProps> = ({
                 id="prof-target-locs"
                 tags={formik.values.targetLocations}
                 onChange={(tags) => formik.setFieldValue('targetLocations', tags)}
-                placeholder="Add regions (e.g. Remote Worldwide, United Kingdom, Germany, United States)..."
-                theme="emerald"
+                placeholder="Add regions (e.g. Remote Worldwide, Europe, Africa, Asia, Americas, Fully Remote)..."
+                theme="green"
                 icon={<FiGlobe style={{ fontSize: '0.75rem' }} />}
               />
               {formik.touched.targetLocations && formik.errors.targetLocations && (

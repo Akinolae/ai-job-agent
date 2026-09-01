@@ -141,6 +141,12 @@ export class SkillDiffEngine {
       }
     }
 
+    // Check if job TITLE explicitly mandates a completely foreign stack
+    const titleIncompatible = INCOMPATIBLE_STACK_KEYWORDS.some(kw => {
+      const canonical = this.normalizeSkill(kw).toLowerCase();
+      return (title.includes(kw) || title.includes(canonical)) && !candidateSkillSet.has(canonical);
+    });
+
     // Check if job requires heavy foreign stacks that candidate doesn't have
     for (const foreign of INCOMPATIBLE_STACK_KEYWORDS) {
       const foreignCanonical = this.normalizeSkill(foreign);
@@ -151,20 +157,27 @@ export class SkillDiffEngine {
       }
     }
 
-    // 4. Calculate Tech Coverage Percentage
+    // 4. Calculate Tech Coverage Percentage with Core-Stack weighting
+    // In many global/African tech postings, 10+ optional frameworks are mentioned in one JD.
+    // Weight candidate's matched core stack fairly.
     const totalRequiredCount = Math.max(1, detectedJobSkills.length);
-    const techCoverage = Math.round((matchedMustHaves.length / totalRequiredCount) * 100);
+    const rawCoverage = Math.round((matchedMustHaves.length / totalRequiredCount) * 100);
+    // Effective coverage benchmarks matched skills against realistic top 5 stack requirements
+    const effectiveCoverage = Math.min(100, Math.round((matchedMustHaves.length / Math.min(5, totalRequiredCount)) * 100));
+    const techCoverage = Math.max(rawCoverage, effectiveCoverage);
 
     // 5. Compute Asymmetric Gating Multiplier
     let gatingMultiplier = 1.0;
-    if (incompatibleStacksFound.length >= 2) {
-      gatingMultiplier = 0.25; // Drastic penalty if job requires multiple foreign technologies (e.g. Java + Spring + Angular)
-    } else if (techCoverage >= 75) {
-      gatingMultiplier = 1.0;
+    if (titleIncompatible) {
+      gatingMultiplier = 0.25; // Strict penalty only if job title explicitly specifies incompatible stack (e.g. "Senior Java Developer")
+    } else if (matchedMustHaves.length >= 4) {
+      gatingMultiplier = 1.0; // Candidate matches 4+ core technologies (e.g. React, Node, TS, PostgreSQL)
+    } else if (matchedMustHaves.length >= 2) {
+      gatingMultiplier = 0.85;
     } else if (techCoverage >= 50) {
       gatingMultiplier = 0.80;
     } else if (techCoverage >= 30) {
-      gatingMultiplier = 0.45;
+      gatingMultiplier = 0.50;
     } else {
       gatingMultiplier = 0.20; // Hard gate ceiling
     }

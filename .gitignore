@@ -64,3 +64,5 @@ Thumbs.db
 *~
 .cache/
 .next
+__pycache__/
+*.pyc

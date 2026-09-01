@@ -48,18 +48,32 @@ export class JobspyRunner {
       ? `--locations '${JSON.stringify(extraLocs)}'`
       : '';
 
+    // Derive optimal Indeed country code based on primary location (default to worldwide / uk)
+    let countryArg = 'worldwide';
+    const locLower = (primaryLoc || '').toLowerCase();
+    if (locLower.includes('uk') || locLower.includes('united kingdom') || locLower.includes('london')) countryArg = 'uk';
+    else if (locLower.includes('germany') || locLower.includes('berlin') || locLower.includes('munich')) countryArg = 'germany';
+    else if (locLower.includes('netherlands') || locLower.includes('amsterdam')) countryArg = 'netherlands';
+    else if (locLower.includes('canada') || locLower.includes('toronto')) countryArg = 'canada';
+    else if (locLower.includes('nigeria') || locLower.includes('lagos')) countryArg = 'nigeria';
+    else if (locLower.includes('south africa') || locLower.includes('cape town')) countryArg = 'south africa';
+    else if (locLower.includes('singapore')) countryArg = 'singapore';
+    else if (locLower.includes('india') || locLower.includes('bengaluru')) countryArg = 'india';
+    else if (locLower.includes('united states') || locLower.includes('usa')) countryArg = 'usa';
+
     const command = [
       `python3 "${pythonScript}"`,
       `--search "${primaryTerm}"`,
       primaryLoc ? `--location "${primaryLoc}"` : '',
       searchesArg,
       locationsArg,
+      `--sites "indeed,linkedin,zip_recruiter,glassdoor,google"`,
       `--limit ${limitPerSite}`,
-      `--hours ${hoursOld}`,
-      `--country uk`,
+      `--hours ${hoursOld || 336}`,
+      `--country ${countryArg}`,
     ].filter(Boolean).join(' ');
 
-    console.log(`[JobSpy] Launching multi-board scrape across ${terms.length} search term(s) and ${locs.length} location(s)...`);
+    console.log(`[JobSpy] Launching multi-board scrape (Indeed, LinkedIn, ZipRecruiter, Glassdoor, Google) across ${terms.length} search term(s) and ${locs.length} location(s) (Region: ${countryArg}, Window: 2 weeks)...`);
 
     return new Promise((resolve) => {
       const child = exec(
@@ -107,10 +121,13 @@ export class JobspyRunner {
               .filter(job => job.job_url && job.title && job.company)
               .map((job) => {
                 const url = job.job_url.trim();
+                const siteName = (job.site || '').toLowerCase();
                 const boardType = url.includes('lever.co')
                   ? 'lever'
                   : url.includes('greenhouse.io')
                   ? 'greenhouse'
+                  : ['indeed', 'linkedin', 'zip_recruiter', 'glassdoor', 'google'].includes(siteName)
+                  ? siteName
                   : 'custom';
 
                 const companyKey = job.company.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20);
@@ -130,7 +147,7 @@ export class JobspyRunner {
                   company: job.company.trim(),
                   location: job.location || primaryLoc || 'Remote',
                   workplaceType: job.workplace_type || 'Full-time',
-                  boardType: boardType as 'greenhouse' | 'lever' | 'custom',
+                  boardType: (boardType === 'zip_recruiter' ? 'custom' : boardType) as any,
                   applyUrl: url,
                   postedAt: job.date_posted ? new Date(job.date_posted).toISOString() : new Date().toISOString(),
                   discoveredAt: new Date().toISOString(),
@@ -138,7 +155,7 @@ export class JobspyRunner {
                 };
               });
 
-            console.log(`[JobSpy] Parsed ${postings.length} unique live job postings.`);
+            console.log(`[JobSpy] Parsed ${postings.length} unique live job postings across Indeed, LinkedIn, ZipRecruiter, Glassdoor, and Google.`);
             resolve(postings);
           } catch (parseError) {
             console.warn(`[JobSpy] Failed to parse output: ${parseError}. Returning empty list.`);

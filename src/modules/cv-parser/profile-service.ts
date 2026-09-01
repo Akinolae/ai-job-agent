@@ -101,7 +101,7 @@ export class ProfileService {
       4. Tools & Platforms: Extract software, platforms, apps, frameworks, or cloud tools mentioned (e.g. Meta Ads, Google Analytics, Canva, HubSpot, Figma, Hootsuite, Mailchimp, Docker, Notion, Excel, Salesforce).
       5. Skills Object: Populate 'core' with domain skills, 'tools' with software/platforms, and if technical, populate frontend/backend/databases/devops.
       6. Extract total professional experience in years, current location, phone with country code, and email.
-      7. For target locations, if not explicitly specified in the text, use ["Worldwide", "Remote", "United States", "United Kingdom", "Europe", "Canada", "Nigeria"].
+      7. For target locations, if not explicitly specified in the text, use ["Remote Worldwide", "Europe (UK, Germany, Netherlands, Ireland)", "Americas (USA, Canada, Brazil)", "Asia & Middle East (Singapore, UAE, Japan, India)", "Africa (Nigeria, South Africa, Kenya, Ghana)", "Fully Remote Anywhere"].
     `;
 
     const structuredProfile = await GeminiService.generateJson<CandidateProfile>(
@@ -319,7 +319,7 @@ export class ProfileService {
       professionalSummary: professionalSummary || `Experienced professional in ${targetRoles.slice(0, 2).join(' & ') || 'their field'} with expertise in ${coreSkills.slice(0, 3).join(', ') || 'their domain'}.`,
       targetRoles: targetRoles.length ? targetRoles : ['Specialist'],
       potentiallyQualifiedRoles,
-      targetLocations: ['Worldwide', 'Remote Worldwide', 'United States', 'United Kingdom', 'Remote EU', 'Canada', 'Nigeria'],
+      targetLocations: ['Remote Worldwide', 'Europe (UK, Germany, Netherlands, Ireland)', 'Americas (USA, Canada, Brazil)', 'Asia & Middle East (Singapore, UAE, Japan, India)', 'Africa (Nigeria, South Africa, Kenya, Ghana)', 'Fully Remote Anywhere'],
       coreSkills: coreSkills.length ? coreSkills : ['Strategic Planning', 'Problem Solving'],
       toolsAndPlatforms: toolsAndPlatforms.length ? toolsAndPlatforms : ['Productivity Tools'],
       skills: {

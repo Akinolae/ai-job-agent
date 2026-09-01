@@ -63,8 +63,12 @@ STRICT EVALUATION PRINCIPLES:
    - Award 12-15 points for appropriate seniority match.
 
 4. MODALITY & LOCATION FIT (Max 15 points):
-   - If the role is 100% Remote, Remote Worldwide, Remote EU/Africa/US, or offers visa/relocation, award 13-15 points.
-   - Deduct points if the job strictly requires local in-person presence in a country the candidate does not target and does not sponsor.
+   - Global Scope: Evaluate opportunities across Africa, Europe, the Americas, and Asia equally. Maintain comprehensive multi-continental search and matching.
+   - EMEA & Regional Remote Inclusion: Roles that accept "EMEA" (Europe, Middle East & Africa) Remote, "Remote EU / EMEA", "Worldwide Remote", or "Work from Anywhere" are fully eligible and MUST be awarded top score (15/15 points). Candidates located in Africa, Europe, or the Middle East are direct geographic fits for all EMEA remote positions.
+   - Fully Remote & Regional Remote: If the role is 100% Fully Remote, "Remote Worldwide", "Remote EMEA", "Remote Europe", "Remote Africa", "Remote Americas", or "Remote APAC", award top score: 14-15 points.
+   - Home Country & Target Hubs: If the role is based in the candidate's home country/location (e.g., Nigeria, Lagos, Abuja, South Africa, Kenya, Ghana, Egypt, Rwanda) OR any country listed in their targetLocations across Europe, Africa, Americas, or Asia, award 14-15 points. NEVER penalize a candidate for a role located in their own home country or African/European/American/Asian target regions.
+   - If the role offers visa sponsorship or relocation support, award 13-15 points.
+   - Only deduct points if the position strictly mandates local on-site in-person presence in an unlisted foreign country without relocation or remote options.
 
 CRITICAL HARD CEILING RULES:
 - If the job description is in a foreign language (e.g. Spanish, German, French, Portuguese) and the candidate's profile/resume is in English, CAP the overall matchScore at ≤ 45% because the candidate cannot perform effectively in non-English workplaces.

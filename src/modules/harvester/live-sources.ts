@@ -194,26 +194,51 @@ export class LiveJobSources {
   }
 
   /**
-   * Fetches live remote jobs from Jobicy API.
+   * Fetches live remote jobs from Jobicy API across worldwide and regional streams.
    */
   static async fetchJobicy(targetRoles: string[]): Promise<JobPosting[]> {
-    console.log('[LiveSources] Fetching live jobs from Jobicy (Global Remote)...');
-    const data = await safeFetchJson<{ jobs?: any[] }>('https://jobicy.com/api/v2/remote-jobs?count=50');
-    const rawJobs = data?.jobs || [];
+    console.log('[LiveSources] Fetching live jobs from Jobicy (Global Remote Streams)...');
+    
+    // Fetch global stream as well as regional EMEA / Europe / Africa / APAC / LATAM streams
+    const urls = [
+      'https://jobicy.com/api/v2/remote-jobs?count=50',
+      'https://jobicy.com/api/v2/remote-jobs?count=30&geo=emea',
+      'https://jobicy.com/api/v2/remote-jobs?count=30&geo=europe',
+      'https://jobicy.com/api/v2/remote-jobs?count=30&geo=uk',
+      'https://jobicy.com/api/v2/remote-jobs?count=30&geo=apac',
+      'https://jobicy.com/api/v2/remote-jobs?count=30&geo=latam',
+    ];
 
-    return rawJobs
+    const responses = await Promise.all(urls.map(u => safeFetchJson<{ jobs?: any[] }>(u)));
+    const allRawJobs: any[] = [];
+    const seenJobIds = new Set<string>();
+
+    for (const res of responses) {
+      if (res && Array.isArray(res.jobs)) {
+        for (const j of res.jobs) {
+          const key = `${j.companyName || ''}::${j.jobTitle || ''}`;
+          if (!seenJobIds.has(key)) {
+            seenJobIds.add(key);
+            allRawJobs.push(j);
+          }
+        }
+      }
+    }
+
+    return allRawJobs
       .filter(job => isTitleEligible(job.jobTitle, targetRoles))
       .map(job => {
         const title = job.jobTitle || 'Untitled';
         const company = job.companyName || 'Jobicy Listing';
         const applyUrl = (job.url || '').trim();
+        const geoTag = job.jobGeo || 'Worldwide Remote';
 
         return {
           jobId: buildJobId('jobicy', company, title, applyUrl),
           title,
           company,
-          location: job.jobGeo || 'Worldwide Remote',
-          workplaceType: job.jobType || 'Remote',
+          location: geoTag.toLowerCase().includes('remote') ? geoTag : `Remote (${geoTag})`,
+          workplaceType: 'Remote',
           boardType: 'custom',
           applyUrl,
           description: cleanDescription(job.jobDescription),
@@ -225,15 +250,219 @@ export class LiveJobSources {
   }
 
   /**
-   * Fetches live remote jobs from Arbeitnow API (Remote EU & Worldwide only).
+   * Fetches live remote jobs from Himalayas API.
    */
-  static async fetchArbeitnow(targetRoles: string[]): Promise<JobPosting[]> {
-    console.log('[LiveSources] Fetching live jobs from Arbeitnow (Remote EU/Worldwide only)...');
-    const data = await safeFetchJson<{ data?: any[] }>('https://www.arbeitnow.com/api/job-board-api');
-    const rawJobs = (data?.data || []).filter(job => job.remote === true || job.visa_sponsorship === true);
+  static async fetchHimalayas(targetRoles: string[]): Promise<JobPosting[]> {
+    console.log('[LiveSources] Fetching live jobs from Himalayas (Worldwide Remote)...');
+    const data = await safeFetchJson<{ jobs?: any[] }>('https://himalayas.app/jobs/api?limit=50');
+    const rawJobs = data?.jobs || [];
 
     return rawJobs
       .filter(job => isTitleEligible(job.title, targetRoles))
+      .map(job => {
+        const title = job.title || 'Untitled';
+        const company = job.companyName || job.company?.name || 'Himalayas Listing';
+        const applyUrl = (job.applicationLink || job.url || `https://himalayas.app/companies/${job.companySlug}/jobs/${job.slug}`).trim();
+        const locRestrictions = Array.isArray(job.locationRestrictions) && job.locationRestrictions.length > 0
+          ? job.locationRestrictions.join(', ')
+          : 'Worldwide Remote';
+
+        return {
+          jobId: buildJobId('himalayas', company, title, applyUrl),
+          title,
+          company,
+          location: locRestrictions.toLowerCase().includes('remote') ? locRestrictions : `Remote (${locRestrictions})`,
+          workplaceType: 'Remote',
+          boardType: 'custom',
+          applyUrl,
+          description: cleanDescription(job.description),
+          postedAt: job.pubDate ? new Date(job.pubDate).toISOString() : (job.createdAt || new Date().toISOString()),
+          discoveredAt: new Date().toISOString(),
+          status: 'NEW' as const
+        };
+      });
+  }
+
+  /**
+   * Fetches live remote tech jobs from WeWorkRemotely RSS feeds across engineering categories.
+   */
+  static async fetchWeWorkRemotely(targetRoles: string[]): Promise<JobPosting[]> {
+    console.log('[LiveSources] Fetching live jobs from WeWorkRemotely (Multi-category Global Feeds)...');
+    const feedUrls = [
+      'https://weworkremotely.com/categories/remote-programming-jobs.rss',
+      'https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss',
+      'https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss',
+      'https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss',
+      'https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss'
+    ];
+
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const items: JobPosting[] = [];
+    const seenUrls = new Set<string>();
+
+    await Promise.all(
+      feedUrls.map(async (feedUrl) => {
+        try {
+          const res = await fetch(feedUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: AbortSignal.timeout(30000)
+          });
+          if (!res.ok) return;
+          const xml = await res.text();
+
+          const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+          let match: RegExpExecArray | null;
+
+          while ((match = itemRegex.exec(xml)) !== null) {
+            const itemXml = match[1];
+            const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || itemXml.match(/<title>(.*?)<\/title>/);
+            const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+            const descMatch = itemXml.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) || itemXml.match(/<description>([\s\S]*?)<\/description>/);
+            const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
+            const regionMatch = itemXml.match(/<region><!\[CDATA\[(.*?)\]\]><\/region>/) || itemXml.match(/<region>(.*?)<\/region>/);
+
+            if (!titleMatch || !linkMatch) continue;
+
+            const applyUrl = linkMatch[1].trim();
+            if (seenUrls.has(applyUrl)) continue;
+
+            const rawTitle = titleMatch[1].trim();
+            let company = 'WWR Listing';
+            let jobTitle = rawTitle;
+
+            if (rawTitle.includes(':')) {
+              const parts = rawTitle.split(':');
+              company = parts[0].trim();
+              jobTitle = parts.slice(1).join(':').trim();
+            }
+
+            if (!isTitleEligible(jobTitle, targetRoles)) continue;
+
+            const postedDate = pubDateMatch ? new Date(pubDateMatch[1]) : new Date();
+            // 2-week window filter (14 days = 336 hours)
+            if (now - postedDate.getTime() > twoWeeksInMs) continue;
+
+            seenUrls.add(applyUrl);
+            const region = regionMatch ? regionMatch[1].trim() : 'Worldwide Remote';
+
+            items.push({
+              jobId: buildJobId('wwr', company, jobTitle, applyUrl),
+              title: jobTitle,
+              company,
+              location: region.toLowerCase().includes('remote') ? region : `Remote (${region})`,
+              workplaceType: 'Remote',
+              boardType: 'custom',
+              applyUrl,
+              description: cleanDescription(descMatch ? descMatch[1] : ''),
+              postedAt: postedDate.toISOString(),
+              discoveredAt: new Date().toISOString(),
+              status: 'NEW' as const
+            });
+          }
+        } catch (err) {
+          console.warn(`[LiveSources] WeWorkRemotely fetch failed for ${feedUrl}:`, err);
+        }
+      })
+    );
+
+    return items;
+  }
+
+  /**
+   * Fetches live remote jobs from Working Nomads API (Max 2 weeks old).
+   */
+  static async fetchWorkingNomads(targetRoles: string[]): Promise<JobPosting[]> {
+    console.log('[LiveSources] Fetching live jobs from Working Nomads (Global Remote)...');
+    const data = await safeFetchJson<any[]>('https://www.workingnomads.com/api/exposed_jobs/');
+    if (!Array.isArray(data)) return [];
+
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    return data
+      .filter(job => {
+        const title = job.title || '';
+        const postedAt = job.pub_date ? new Date(job.pub_date).getTime() : now;
+        return (now - postedAt <= twoWeeksInMs) && isTitleEligible(title, targetRoles);
+      })
+      .map(job => {
+        const title = job.title || 'Untitled';
+        const company = job.company_name || 'Working Nomads Listing';
+        const applyUrl = (job.url || `https://www.workingnomads.com/jobs/${job.id}`).trim();
+        const loc = job.location || 'Worldwide Remote';
+
+        return {
+          jobId: buildJobId('workingnomads', company, title, applyUrl),
+          title,
+          company,
+          location: loc.toLowerCase().includes('remote') ? loc : `Remote (${loc})`,
+          workplaceType: 'Remote',
+          boardType: 'custom',
+          applyUrl,
+          description: cleanDescription(job.description),
+          postedAt: job.pub_date ? new Date(job.pub_date).toISOString() : new Date().toISOString(),
+          discoveredAt: new Date().toISOString(),
+          status: 'NEW' as const
+        };
+      });
+  }
+
+  /**
+   * Fetches live remote jobs from Nodesk API (Max 2 weeks old).
+   */
+  static async fetchNodesk(targetRoles: string[]): Promise<JobPosting[]> {
+    console.log('[LiveSources] Fetching live jobs from Nodesk (Global Remote)...');
+    const data = await safeFetchJson<any[]>('https://nodesk.co/remote-jobs/index.json');
+    if (!Array.isArray(data)) return [];
+
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    return data
+      .filter(job => {
+        const title = job.title || '';
+        const postedAt = job.date ? new Date(job.date).getTime() : now;
+        return (now - postedAt <= twoWeeksInMs) && isTitleEligible(title, targetRoles);
+      })
+      .map(job => {
+        const title = job.title || 'Untitled';
+        const company = job.company || 'Nodesk Listing';
+        const applyUrl = (job.apply_url || job.url || '').trim();
+        const region = job.region || 'Worldwide Remote';
+
+        return {
+          jobId: buildJobId('nodesk', company, title, applyUrl),
+          title,
+          company,
+          location: region.toLowerCase().includes('remote') ? region : `Remote (${region})`,
+          workplaceType: 'Remote',
+          boardType: 'custom',
+          applyUrl,
+          description: cleanDescription(job.description || ''),
+          postedAt: job.date ? new Date(job.date).toISOString() : new Date().toISOString(),
+          discoveredAt: new Date().toISOString(),
+          status: 'NEW' as const
+        };
+      });
+  }
+
+  /**
+   * Fetches live remote jobs from Arbeitnow API (Remote EU & Worldwide only, Max 2 weeks old).
+   */
+  static async fetchArbeitnow(targetRoles: string[]): Promise<JobPosting[]> {
+    console.log('[LiveSources] Fetching live jobs from Arbeitnow (Remote EU/Worldwide, 2-week window)...');
+    const data = await safeFetchJson<{ data?: any[] }>('https://www.arbeitnow.com/api/job-board-api');
+    const rawJobs = (data?.data || []).filter(job => job.remote === true || job.visa_sponsorship === true);
+
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    return rawJobs
+      .filter(job => {
+        const postedTime = job.created_at ? (job.created_at * 1000) : now;
+        return (now - postedTime <= twoWeeksInMs) && isTitleEligible(job.title, targetRoles);
+      })
       .map(job => {
         const title = job.title || 'Untitled';
         const company = job.company_name || 'Arbeitnow Listing';
@@ -256,18 +485,36 @@ export class LiveJobSources {
   }
 
   /**
-   * Fetches from all live open job boards in parallel.
+   * Fetches from all live open job boards and global enterprise ATS platforms in parallel.
    */
   static async fetchAll(targetRoles: string[]): Promise<JobPosting[]> {
-    const [remoteok, remotive, jobicy, arbeitnow] = await Promise.all([
+    // Dynamically import AtsEndpoints to avoid circular dependencies
+    const { AtsEndpoints } = await import('./ats-endpoints');
+
+    const [remoteok, remotive, jobicy, himalayas, wwr, workingNomads, nodesk, arbeitnow, atsJobs] = await Promise.all([
       this.fetchRemoteOK(targetRoles),
       this.fetchRemotive(targetRoles),
       this.fetchJobicy(targetRoles),
-      this.fetchArbeitnow(targetRoles)
+      this.fetchHimalayas(targetRoles),
+      this.fetchWeWorkRemotely(targetRoles),
+      this.fetchWorkingNomads(targetRoles),
+      this.fetchNodesk(targetRoles),
+      this.fetchArbeitnow(targetRoles),
+      AtsEndpoints.crawlCuratedGlobal(targetRoles)
     ]);
 
-    const combined = [...remoteok, ...remotive, ...jobicy, ...arbeitnow];
-    console.log(`[LiveSources] Aggregated ${combined.length} relevant jobs from RemoteOK (${remoteok.length}), Remotive (${remotive.length}), Jobicy (${jobicy.length}), and Arbeitnow (${arbeitnow.length}).`);
+    const combined = [
+      ...remoteok, 
+      ...remotive, 
+      ...jobicy, 
+      ...himalayas, 
+      ...wwr, 
+      ...workingNomads, 
+      ...nodesk, 
+      ...arbeitnow, 
+      ...atsJobs
+    ];
+    console.log(`[LiveSources] Aggregated ${combined.length} relevant jobs across 9 multi-board sources: RemoteOK (${remoteok.length}), Remotive (${remotive.length}), Jobicy (${jobicy.length}), Himalayas (${himalayas.length}), WWR (${wwr.length}), WorkingNomads (${workingNomads.length}), Nodesk (${nodesk.length}), Arbeitnow (${arbeitnow.length}), and Global Enterprise ATS (${atsJobs.length}).`);
     return combined;
   }
 }

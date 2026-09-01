@@ -43,12 +43,14 @@ const DISQUALIFIED_DOMAIN_PATTERNS = [
 ];
 
 const SOFTWARE_DOMAIN_INDICATORS = [
-  'software', 'full stack', 'full-stack', 'fullstack', 'frontend', 'front-end', 'backend', 'back-end',
-  'web developer', 'web engineer', 'mobile developer', 'mobile engineer', 'react', 'node', 'nodejs',
+  'software', 'full stack', 'full-stack', 'fullstack', 'frontend', 'front-end', 'front end', 'backend', 'back-end', 'back end',
+  'web developer', 'web engineer', 'mobile developer', 'mobile engineer', 'react', 'react native', 'node', 'nodejs',
   'typescript', 'javascript', 'nestjs', 'golang', 'devops', 'cloud engineer', 'solutions architect',
   'software architect', 'tech lead', 'technical lead', 'engineering manager', 'api', 'ios', 'android',
   'python developer', 'application engineer', 'programmer', 'full stack developer', 'frontend developer',
-  'backend developer', 'software engineering'
+  'backend developer', 'software engineering', 'platform engineer', 'site reliability', 'sre', 'core engineer',
+  'data engineer', 'security engineer', 'solution developer', 'solution design', 'lead developer', 'staff engineer',
+  'software developer', 'software engineer', 'developer', 'engineer'
 ];
 
 const HARD_DEALBREAKER_PATTERNS = [
@@ -63,7 +65,16 @@ export class BinaryGates {
    * Evaluates if a job posting passes all Tier-1 non-negotiable binary gates.
    */
   static evaluate(job: JobPosting, profile: CandidateProfile): GateEvaluationResult {
-    const title = (job.title || '').toLowerCase().trim();
+    // Normalize and clean title (remove job board metadata wrappers like "| JOBS IN LAGOS", "AT COMPANY")
+    let rawTitle = (job.title || '').trim();
+    let cleanedTitle = rawTitle
+      .replace(/\|.*$/i, '')
+      .replace(/\bat\s+[A-Za-z0-9\s&.-]+$/i, '')
+      .replace(/\[.*?\]/g, '')
+      .replace(/\(.*?\)/g, '')
+      .trim();
+
+    const title = (cleanedTitle || rawTitle).toLowerCase();
     const desc = (job.description || '').toLowerCase();
     const combined = `${title} ${desc}`;
 
@@ -99,18 +110,18 @@ export class BinaryGates {
     }
 
     // 3. Positive Domain Alignment Check
-    const targetRoles = (profile.targetRoles || []).map(r => r.toLowerCase().trim()).filter(Boolean);
-    const qualifiedRoles = (profile.potentiallyQualifiedRoles || []).map(r => r.toLowerCase().trim()).filter(Boolean);
+    const targetRoles = (profile.targetRoles || []).map((r: string) => r.toLowerCase().trim()).filter(Boolean);
+    const qualifiedRoles = (profile.potentiallyQualifiedRoles || []).map((r: string) => r.toLowerCase().trim()).filter(Boolean);
     const allProfileRoles = [...targetRoles, ...qualifiedRoles];
 
-    const isSoftwareProfile = allProfileRoles.some(r => 
+    const isSoftwareProfile = allProfileRoles.some((r: string) => 
       r.includes('software') || r.includes('engineer') || r.includes('developer') || 
       r.includes('frontend') || r.includes('backend') || r.includes('full-stack') || r.includes('full stack') || r.includes('react')
     );
 
     if (isSoftwareProfile && allProfileRoles.length > 0) {
-      const directMatch = allProfileRoles.some(r => title.includes(r));
-      const hasSoftwareIndicator = SOFTWARE_DOMAIN_INDICATORS.some(ind => title.includes(ind));
+      const directMatch = allProfileRoles.some(r => title.includes(r) || rawTitle.toLowerCase().includes(r));
+      const hasSoftwareIndicator = SOFTWARE_DOMAIN_INDICATORS.some(ind => title.includes(ind) || rawTitle.toLowerCase().includes(ind));
 
       if (!directMatch && !hasSoftwareIndicator) {
         return {

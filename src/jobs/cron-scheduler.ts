@@ -196,7 +196,10 @@ export class PipelineOrchestrator {
         console.warn(
           "No candidate profile found. Loading default fallback profile from config...",
         );
-        const mockProfile = ProfileService.getMockProfile("master_resume.pdf");
+        const mockProfile = ProfileService.extractProfileFromRawText(
+          "Makinde Akinola\nSenior Full-Stack Engineer\nLagos, Nigeria\nReact, Node.js, TypeScript, Go",
+          "master_resume.pdf"
+        );
 
         // Ensure local dummy resume exists for testing
         const tempDir = path.resolve(process.cwd(), "storage/temp");
@@ -270,25 +273,91 @@ export class PipelineOrchestrator {
       const profileLocs = activeProfile.targetLocations?.length
         ? activeProfile.targetLocations
         : [];
-      const basePriorityLocs = ["Remote", "Worldwide", "Remote Worldwide", "United Kingdom", "United States"];
-      const targetLocations = Array.from(
-        new Set([...profileLocs, ...basePriorityLocs]),
-      ).slice(0, 6); // Keep focused to avoid combinatorial search explosion
+
+      // Extract discrete cities/countries from composite strings like "Africa (Nigeria, South Africa, Kenya, Ghana)"
+      const cleanDiscreteLocs = new Set<string>();
+      
+      // 1. Candidate's home location first if available
+      if (activeProfile.location && activeProfile.location.trim()) {
+        cleanDiscreteLocs.add(activeProfile.location.trim());
+      }
+
+      for (const locStr of profileLocs) {
+        if (!locStr) continue;
+        const parenMatch = locStr.match(/\((.*?)\)/);
+        if (parenMatch) {
+          parenMatch[1].split(/[,/]+/).forEach(p => {
+            const trimmed = p.trim();
+            if (trimmed) cleanDiscreteLocs.add(trimmed);
+          });
+          const prefix = locStr.replace(/\(.*?\)/, '').trim();
+          if (prefix && !/^(africa|europe|americas|asia|apac|emea|latam)$/i.test(prefix)) {
+            cleanDiscreteLocs.add(prefix);
+          }
+        } else {
+          cleanDiscreteLocs.add(locStr.trim());
+        }
+      }
+
+      // Balanced Global Search Matrix spanning Europe, Africa, Americas, Asia, EMEA, and Worldwide Remote
+      const globalContinentalLocs = [
+        // Worldwide Remote & EMEA
+        "Remote Worldwide",
+        "Remote EMEA",
+        "Worldwide",
+        "Remote",
+        // Europe
+        "United Kingdom",
+        "London, UK",
+        "Germany",
+        "Berlin, Germany",
+        "Netherlands",
+        "Amsterdam, Netherlands",
+        "Ireland",
+        "Remote Europe",
+        // Africa
+        "Nigeria",
+        "Lagos, Nigeria",
+        "Kenya",
+        "Nairobi, Kenya",
+        "South Africa",
+        "Cape Town, South Africa",
+        "Ghana",
+        "Remote Africa",
+        // Americas
+        "Canada",
+        "Toronto, Canada",
+        "United States",
+        "Remote Americas",
+        "Remote LATAM",
+        // Asia-Pacific & Middle East
+        "Singapore",
+        "United Arab Emirates",
+        "Dubai, UAE",
+        "India",
+        "Remote APAC"
+      ];
+
+      for (const loc of globalContinentalLocs) {
+        cleanDiscreteLocs.add(loc);
+      }
+
+      const targetLocations = Array.from(cleanDiscreteLocs).slice(0, 16);
 
       console.log(
-        `[Pipeline] Targeted search for ${searchRoles.length} role(s): ${searchRoles.join(", ")} across locations: ${targetLocations.join(", ")}`,
+        `[Pipeline] Targeted multi-continental search for ${searchRoles.length} role(s): ${searchRoles.join(", ")} across distinct regions: ${targetLocations.join(", ")}`,
       );
 
       const [liveApiJobs, scrapedJobs] = await Promise.all([
         LiveJobSources.fetchAll(searchRoles),
-        JobspyRunner.scrape(searchRoles.slice(0, 4), targetLocations.slice(0, 3), 10, 336),
+        JobspyRunner.scrape(searchRoles.slice(0, 4), targetLocations, 10, 336),
       ]);
 
       if (this.isCancelled) return;
 
       const discoveredJobs: JobPosting[] = [...liveApiJobs, ...scrapedJobs];
       console.log(
-        `[Pipeline] Discovered total ${discoveredJobs.length} live job postings across Arbeitnow, Remotive, Jobicy, Indeed, and LinkedIn.`,
+        `[Pipeline] Discovered total ${discoveredJobs.length} live job postings across Indeed, LinkedIn, ZipRecruiter, Glassdoor, Google, Global ATS, RemoteOK, Remotive, Jobicy, Himalayas, WeWorkRemotely, WorkingNomads, Nodesk, and Arbeitnow (2-week window).`,
       );
 
       // 3. Deduplication & Concurrent Matching
@@ -374,7 +443,7 @@ export class PipelineOrchestrator {
       if (newlyQueuedJobs.length > 0) {
         for (const job of newlyQueuedJobs) {
           NotificationService.send({
-            type: "MATCH_FOUND",
+            type: "INFO",
             title: `🎯 High Match Found (${job.matchScore}%) — ${job.company}`,
             body: `New role "${job.title}" at ${job.company} matches your profile (${job.matchScore}%). Direct apply link and tailored pitch ready.`,
             company: job.company,

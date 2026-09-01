@@ -211,7 +211,7 @@ export class GreenhouseHandler {
             const selectedValue = await ScreenAnswerer.selectBestOption(trimmedLabel, options, profile, role, company);
             if (selectedValue) {
               await select.selectOption(selectedValue);
-              const selectedOptText = options.find(o => o.value === selectedValue)?.text || selectedValue;
+              const selectedOptText = options.find((o: { value: string; text: string }) => o.value === selectedValue)?.text || selectedValue;
               submittedFields[trimmedLabel] = selectedOptText;
             }
           } else if (radios.length > 0) {

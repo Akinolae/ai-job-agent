@@ -218,13 +218,13 @@ export class Scorer {
     const diff = skillDiff || SkillDiffEngine.compute(job, profile);
 
     // 1. Role Title Alignment (Max 25 points)
-    const targetRoles = (profile.targetRoles || []).map(r => r.toLowerCase().trim()).filter(Boolean);
-    const qualifiedRoles = (profile.potentiallyQualifiedRoles || []).map(r => r.toLowerCase().trim()).filter(Boolean);
+    const targetRoles = (profile.targetRoles || []).map((r: string) => r.toLowerCase().trim()).filter(Boolean);
+    const qualifiedRoles = (profile.potentiallyQualifiedRoles || []).map((r: string) => r.toLowerCase().trim()).filter(Boolean);
     
     let roleTitleScore = 0;
-    if (targetRoles.some(r => title.includes(r))) {
+    if (targetRoles.some((r: string) => title.includes(r))) {
       roleTitleScore = 25;
-    } else if (qualifiedRoles.some(r => title.includes(r))) {
+    } else if (qualifiedRoles.some((r: string) => title.includes(r))) {
       roleTitleScore = 20;
     } else if (title.includes('software') || title.includes('engineer') || title.includes('developer') || title.includes('full stack')) {
       roleTitleScore = 14;
@@ -246,8 +246,35 @@ export class Scorer {
     }
 
     // 4. Location / Modality (Max 15 points)
-    const isRemote = loc.includes('remote') || String(job.workplaceType || '').toLowerCase().includes('remote');
-    const locationScore = isRemote ? 15 : 10;
+    const isEmeaMatch = /\bemea\b|europe,\s*middle\s*east\s*(?:&|and)\s*africa/i.test(`${loc} ${job.title} ${desc}`);
+    const isRemote = loc.includes('remote') || 
+                     loc.includes('worldwide') || 
+                     loc.includes('anywhere') || 
+                     loc.includes('emea') || 
+                     loc.includes('apac') || 
+                     loc.includes('latam') || 
+                     isEmeaMatch ||
+                     String(job.workplaceType || '').toLowerCase().includes('remote');
+
+    const candidateHome = (profile.location || '').toLowerCase().trim();
+    const isHomeMatch = candidateHome && loc.includes(candidateHome);
+
+    const targetLocs = (profile.targetLocations || []).map((l: string) => l.toLowerCase());
+    const isTargetGeoMatch = targetLocs.some((tl: string) => {
+      const cleanTl = tl.replace(/[^a-z0-9]/g, ' ').trim();
+      return cleanTl.split(/\s+/).some((word: string) => word.length > 2 && loc.includes(word));
+    });
+
+    const isGlobalRegionMatch = /europe|uk|germany|netherlands|ireland|sweden|france|spain|poland|africa|nigeria|lagos|abuja|kenya|nairobi|south africa|cape town|johannesburg|ghana|accra|egypt|cairo|rwanda|kigali|asia|singapore|uae|japan|india|americas|canada|us|brazil/i.test(loc);
+
+    let locationScore = 10;
+    if (isRemote || isHomeMatch || isEmeaMatch) {
+      locationScore = 15;
+    } else if (isTargetGeoMatch || isGlobalRegionMatch) {
+      locationScore = 14;
+    } else if (desc.includes('visa') || desc.includes('relocation')) {
+      locationScore = 15;
+    }
 
     let matchScore = techStackScore + roleTitleScore + seniorityScore + locationScore;
     matchScore = Math.min(100, Math.max(0, matchScore));
